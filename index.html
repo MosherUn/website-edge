@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WEBSITE-EDGE · 暗黑工坊</title>
+  <style>
+    /* 全局黑暗风格 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Fira Code', 'Consolas', monospace;
+    }
+
+    body {
+      background: #0b0b0b;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; /* 防止意外滚动 */
+    }
+
+    /* 主界面容器——除运行界面外都是黑色调 */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      background: #0b0b0b;
+      transition: background 0.2s;
+    }
+
+    /* 头部工具栏 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #151515;
+      border-bottom: 1px solid #2a2a2a;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      z-index: 10;
+    }
+
+    .toolbar h1 {
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+      color: #b0b0b0;
+      margin-right: auto;
+      text-shadow: 0 0 6px #3a3a3a;
+    }
+
+    .toolbar h1 span {
+      color: #6a6a6a;
+      font-weight: 300;
+      font-size: 0.9rem;
+      margin-left: 8px;
+    }
+
+    button, .file-label {
+      background: #1f1f1f;
+      border: 1px solid #2f2f2f;
+      color: #d0d0d0;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    button:hover, .file-label:hover {
+      background: #2c2c2c;
+      border-color: #4a4a4a;
+      color: #ffffff;
+      box-shadow: 0 0 12px #2a2a2a;
+    }
+
+    button.danger:hover {
+      background: #3a1a1a;
+      border-color: #7a3a3a;
+      color: #ffb0b0;
+    }
+
+    button.run-btn {
+      background: #1a3a1a;
+      border-color: #2a5a2a;
+      color: #b0e0b0;
+    }
+
+    button.run-btn:hover {
+      background: #1f4a1f;
+      border-color: #3a7a3a;
+      color: #d0ffd0;
+    }
+
+    /* 作品列表网格 */
+    .works-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      background: #0b0b0b;
+      align-content: start;
+    }
+
+    /* 作品卡片 */
+    .work-card {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 16px;
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+      aspect-ratio: 1 / 1;
+      text-align: center;
+      word-break: break-word;
+      user-select: none;
+      position: relative;
+    }
+
+    .work-card:hover {
+      border-color: #4a4a4a;
+      background: #1a1a1a;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px #00000080;
+    }
+
+    .work-card .work-name {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #d0d0d0;
+      line-height: 1.3;
+      max-height: 3.9em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+
+    .work-card .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: #5a5a5a;
+      font-size: 1.4rem;
+      padding: 0 6px;
+      border-radius: 20px;
+      line-height: 1;
+      box-shadow: none;
+      opacity: 0.6;
+      transition: all 0.1s;
+      width: auto;
+      height: auto;
+    }
+
+    .work-card .delete-btn:hover {
+      background: #2a1a1a;
+      color: #ff8080;
+      opacity: 1;
+      box-shadow: none;
+      transform: scale(1.1);
+    }
+
+    /* 空状态 */
+    .empty-hint {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #3a3a3a;
+      padding: 60px 20px;
+      font-size: 1rem;
+      letter-spacing: 1px;
+    }
+
+    /* 编辑器覆盖层——黑色风格 */
+    .editor-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .editor-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .editor-panel {
+      background: #101010;
+      border: 1px solid #2f2f2f;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 900px;
+      height: 80vh;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px #000000;
+      overflow: hidden;
+    }
+
+    .editor-header {
+      padding: 14px 18px;
+      background: #181818;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .editor-header input {
+      flex: 1;
+      background: #0f0f0f;
+      border: 1px solid #2a2a2a;
+      border-radius: 30px;
+      padding: 10px 16px;
+      color: #e0e0e0;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .editor-header input:focus {
+      border-color: #4a4a4a;
+      box-shadow: 0 0 8px #1a1a1a;
+    }
+
+    .editor-header input::placeholder {
+      color: #3a3a3a;
+    }
+
+    .editor-textarea {
+      flex: 1;
+      background: #0c0c0c;
+      border: none;
+      border-bottom: 1px solid #202020;
+      color: #d0d0d0;
+      padding: 18px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      overflow: auto;
+      white-space: pre;
+      tab-size: 2;
+    }
+
+    .editor-textarea::-webkit-scrollbar {
+      width: 10px;
+      background: #0a0a0a;
+    }
+
+    .editor-textarea::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+
+    .editor-footer {
+      padding: 12px 18px;
+      background: #181818;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* 运行视图——纯空白（白色背景） */
+    .run-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+    }
+
+    .run-view.active {
+      display: flex;
+    }
+
+    /* 运行时的iframe区域——空白 */
+    .run-iframe-container {
+      flex: 1;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .run-iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+      display: block;
+    }
+
+    /* 控制台区域——可隐藏 */
+    .console-panel {
+      background: #0f0f0f;
+      border-top: 1px solid #2a2a2a;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      transition: height 0.2s;
+      box-shadow: 0 -6px 16px #00000080;
+      position: relative;
+    }
+
+    .console-panel.hidden {
+      height: 36px;
+    }
+
+    .console-panel.hidden .console-output {
+      display: none;
+    }
+
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 36px;
+      background: #151515;
+      border-bottom: 1px solid #252525;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #7a7a7a;
+      user-select: none;
+    }
+
+    .console-header button {
+      background: transparent;
+      border: none;
+      color: #7a7a7a;
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      box-shadow: none;
+      border-radius: 12px;
+    }
+
+    .console-header button:hover {
+      background: #252525;
+      color: #b0b0b0;
+      box-shadow: none;
+    }
+
+    .console-output {
+      flex: 1;
+      padding: 10px 16px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      color: #b0b0b0;
+      background: #0a0a0a;
+      overflow-y: auto;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .console-output .log-line {
+      border-bottom: 1px solid #1a1a1a;
+      padding: 2px 0;
+    }
+
+    /* 用于关闭运行界面的悬浮按钮 */
+    .close-run-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 300;
+      background: #1f1f1fdd;
+      backdrop-filter: blur(10px);
+      border: 1px solid #3f3f3f;
+      color: #d0d0d0;
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 6px 18px #000000b0;
+      display: none;
+    }
+
+    .close-run-btn.active {
+      display: block;
+    }
+
+    .close-run-btn:hover {
+      background: #2f2f2f;
+      color: #fff;
+      border-color: #5a5a5a;
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3a3a3a;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 600px) {
+      .toolbar h1 {
+        font-size: 1.1rem;
+      }
+      .toolbar h1 span {
+        display: none;
+      }
+      button, .file-label {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      .works-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+        padding: 12px;
+      }
+      .editor-panel {
+        height: 90vh;
+        border-radius: 18px;
+      }
+      .console-panel {
+        height: 160px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 头部工具栏 -->
+    <div class="toolbar">
+      <h1>WEBSITE-EDGE <span>// 暗黑工坊</span></h1>
+      <button id="newWorkBtn" title="新建作品">＋ 新建</button>
+      <label for="importFile" class="file-label" title="导入HTML文件到当前作品（仅当编辑器打开时）">📂 导入</label>
+      <input type="file" id="importFile" accept=".html,.htm,.txt" style="display: none;">
+    </div>
+
+    <!-- 作品网格 -->
+    <div class="works-grid" id="worksGrid">
+      <!-- 动态渲染作品卡片 -->
+    </div>
+  </div>
+
+  <!-- 编辑器覆盖层 -->
+  <div class="editor-overlay" id="editorOverlay">
+    <div class="editor-panel">
+      <div class="editor-header">
+        <input type="text" id="workNameInput" placeholder="作品名称" maxlength="50" autocomplete="off">
+        <button id="saveWorkBtn" class="run-btn">💾 保存</button>
+      </div>
+      <textarea class="editor-textarea" id="codeEditor" placeholder="在这里粘贴或编写 HTML 代码... 无字数限制" spellcheck="false"></textarea>
+      <div class="editor-footer">
+        <button id="closeEditorBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 运行视图 (空白背景) -->
+  <div class="run-view" id="runView">
+    <div class="run-iframe-container" id="runIframeContainer">
+      <iframe id="runIframe" sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin"></iframe>
+    </div>
+    <!-- 控制台 -->
+    <div class="console-panel" id="consolePanel">
+      <div class="console-header">
+        <span>控制台</span>
+        <button id="toggleConsoleBtn">▼ 隐藏</button>
+      </div>
+      <div class="console-output" id="consoleOutput">
+        <div class="log-line">[WEBSITE-EDGE] 控制台就绪</div>
+      </div>
+    </div>
+  </div>
+  <button class="close-run-btn" id="closeRunBtn">✕ 关闭运行</button>
+
+  <script>
+    (function() {
+      // ---------- 核心存储 ----------
+      // 使用 localStorage 模拟 WEBSITE-EDGE/ 文件夹，但用户需求是“内存中创建文件夹”
+      // 为了持久化，使用 localStorage 并加上 WEBSITE-EDGE/ 前缀
+      const STORAGE_PREFIX = 'WEBSITE-EDGE/';
+
+      // 获取所有作品名
+      function getAllWorkNames() {
+        const names = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith(STORAGE_PREFIX)) {
+            names.push(key.substring(STORAGE_PREFIX.length));
+          }
+        }
+        return names;
+      }
+
+      // 读取作品内容
+      function getWorkContent(name) {
+        return localStorage.getItem(STORAGE_PREFIX + name) || '';
+      }
+
+      // 保存作品
+      function saveWork(name, content) {
+        localStorage.setItem(STORAGE_PREFIX + name, content);
+      }
+
+      // 删除作品
+      function deleteWork(name) {
+        localStorage.removeItem(STORAGE_PREFIX + name);
+      }
+
+      // 检查作品是否存在
+      function workExists(name) {
+        return localStorage.getItem(STORAGE_PREFIX + name) !== null;
+      }
+
+      // ---------- 界面元素 ----------
+      const worksGrid = document.getElementById('worksGrid');
+      const newWorkBtn = document.getElementById('newWorkBtn');
+      const editorOverlay = document.getElementById('editorOverlay');
+      const workNameInput = document.getElementById('workNameInput');
+      const codeEditor = document.getElementById('codeEditor');
+      const saveWorkBtn = document.getElementById('saveWorkBtn');
+      const closeEditorBtn = document.getElementById('closeEditorBtn');
+      const importFileInput = document.getElementById('importFile');
+
+      // 运行视图
+      const runView = document.getElementById('runView');
+      const runIframe = document.getElementById('runIframe');
+      const consolePanel = document.getElementById('consolePanel');
+      const consoleOutput = document.getElementById('consoleOutput');
+      const toggleConsoleBtn = document.getElementById('toggleConsoleBtn');
+      const closeRunBtn = document.getElementById('closeRunBtn');
+
+      // 当前编辑状态
+      let currentEditingName = null; // 正在编辑的作品名（原名称）
+      let isEditing = false;
+
+      // 控制台日志缓存（用于运行时的输出）
+      let consoleLogs = [];
+
+      // ---------- 渲染作品列表 ----------
+      function renderWorks() {
+        const names = getAllWorkNames();
+        worksGrid.innerHTML = '';
+
+        if (names.length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'empty-hint';
+          emptyDiv.textContent = '还没有作品，点击「新建」开始创作';
+          worksGrid.appendChild(emptyDiv);
+          return;
+        }
+
+        // 按名称排序
+        names.sort((a, b) => a.localeCompare(b));
+
+        names.forEach(name => {
+          const card = document.createElement('div');
+          card.className = 'work-card';
+          card.dataset.name = name;
+
+          const nameSpan = document.createElement('div');
+          nameSpan.className = 'work-name';
+          nameSpan.textContent = name;
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'delete-btn';
+          delBtn.innerHTML = '✕';
+          delBtn.title = '删除作品';
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 避免触发卡片点击
+            if (confirm(`确定要删除作品「${name}」吗？`)) {
+              deleteWork(name);
+              renderWorks();
+            }
+          });
+
+          card.appendChild(nameSpan);
+          card.appendChild(delBtn);
+
+          card.addEventListener('click', () => {
+            // 点击卡片 → 打开编辑器并加载内容
+            openEditorForWork(name);
+          });
+
+          worksGrid.appendChild(card);
+        });
+      }
+
+      // ---------- 打开编辑器（新建或编辑） ----------
+      function openEditorForWork(name) {
+        currentEditingName = name;
+        isEditing = true;
+        workNameInput.value = name;
+        codeEditor.value = getWorkContent(name);
+        editorOverlay.classList.add('active');
+        workNameInput.focus();
+      }
+
+      function openNewEditor() {
+        // 生成一个默认唯一名称：作品 + 数字
+        let baseName = '未命名作品';
+        let name = baseName;
+        let counter = 1;
+        while (workExists(name)) {
+          name = `${baseName} ${counter}`;
+          counter++;
+        }
+        currentEditingName = null; // 新建，未保存过
+        isEditing = true;
+        workNameInput.value = name;
+        codeEditor.value = '';
+        editorOverlay.classList.add('active');
+        workNameInput.focus();
+        workNameInput.select();
+      }
+
+      // 关闭编辑器
+      function closeEditor() {
+        editorOverlay.classList.remove('active');
+        isEditing = false;
+        currentEditingName = null;
+      }
+
+      // 保存作品
+      function saveCurrentWork() {
+        const newName = workNameInput.value.trim();
+        if (!newName) {
+          alert('请输入作品名称');
+          return;
+        }
+
+        // 名称中不能包含非法字符? 允许大部分字符，但避免路径冲突，简单处理
+        // 但要防止与现有作品重名 (如果是新建或者改名)
+        if (currentEditingName !== newName && workExists(newName)) {
+          alert(`作品「${newName}」已存在，请换一个名字。`);
+          return;
+        }
+
+        const content = codeEditor.value;
+
+        // 如果当前有正在编辑的作品且名字改变了，需要删除旧作品
+        if (currentEditingName && currentEditingName !== newName) {
+          deleteWork(currentEditingName);
+        }
+
+        // 保存新内容
+        saveWork(newName, content);
+
+        // 更新当前编辑名
+        currentEditingName = newName;
+
+        // 刷新列表
+        renderWorks();
+
+        // 提示保存成功 (可选)
+        // 但不做弹窗，以免打扰
+        // 修改保存按钮文字反馈
+        saveWorkBtn.textContent = '✓ 已保存';
+        setTimeout(() => {
+          saveWorkBtn.textContent = '💾 保存';
+        }, 800);
+      }
+
+      // ---------- 运行作品 (全空白背景 + 控制台) ----------
+      function runWorkByName(name) {
+        const content = getWorkContent(name);
+        if (!content) {
+          alert('作品内容为空');
+          return;
+        }
+
+        // 清空控制台输出
+        consoleOutput.innerHTML = '';
+        consoleLogs = [];
+        // 初始日志
+        appendConsoleLog(`[WEBSITE-EDGE] 运行作品: ${name}`);
+
+        // 重置 iframe 内容
+        // 使用 srcdoc 可以直接注入HTML，并且允许脚本
+        // 但为了捕获控制台输出，需要注入一小段脚本覆盖 console 方法
+        // 注意：sandbox 属性需要允许脚本，我们已经设置 allow-scripts 和 allow-same-origin
+        // 为了更安全，但允许 same-origin 可能带来风险，仅用于本地展示；但我们需要同源策略以便注入？
+        // 其实 iframe 内与父页面不同源，但我们可以通过 postMessage 或者直接覆盖 console 不会影响父页面。
+        // 简便方法：在 iframe 的 srcdoc 中注入脚本劫持 console 并 postMessage 到父窗口
+        // 父窗口监听 message 事件并显示到控制台。
+        // 由于我们设置了 allow-same-origin 和 allow-scripts，srcdoc 内容被视为与父窗口同源？不，srcdoc 与父窗口同源？默认是继承父窗口的源？
+        // 根据规范，srcdoc 文档继承父窗口的源，所以我们可以直接使用同源通信，但为了通用性，采用 postMessage 更安全。
+        // 但更简单：直接覆盖 iframe 内的 console 方法，并通过 parent.postMessage 传递
+        // 注意：需要保证父窗口监听 message 事件。
+        
+        // 构建注入的 console 劫持脚本
+        const injectScript = `
+          <script>
+            (function() {
+              const originalLog = console.log;
+              const originalError = console.error;
+              const originalWarn = console.warn;
+              const originalInfo = console.info;
+
+              function sendToParent(type, args) {
+                try {
+                  const msg = {
+                    source: 'website-edge-console',
+                    type: type,
+                    args: Array.from(args).map(arg => {
+                      try {
+                        if (typeof arg === 'object' && arg !== null) {
+                          return JSON.stringify(arg, null, 2);
+                        }
+                        return String(arg);
+                      } catch (e) {
+                        return '[无法序列化的对象]';
+                      }
+                    })
+                  };
+                  window.parent.postMessage(msg, '*');
+                } catch (e) {}
+              }
+
+              console.log = function(...args) {
+                sendToParent('log', args);
+                originalLog.apply(console, args);
+              };
+              console.error = function(...args) {
+                sendToParent('error', args);
+                originalError.apply(console, args);
+              };
+              console.warn = function(...args) {
+                sendToParent('warn', args);
+                originalWarn.apply(console, args);
+              };
+              console.info = function(...args) {
+                sendToParent('info', args);
+                originalInfo.apply(console, args);
+              };
+
+              // 捕获全局错误
+              window.addEventListener('error', (e) => {
+                sendToParent('error', [e.message + ' at ' + e.filename + ':' + e.lineno]);
+              });
+
+              // 也可以捕获 unhandledrejection
+              window.addEventListener('unhandledrejection', (e) => {
+                sendToParent('error', ['Unhandled Promise Rejection: ' + (e.reason?.message || e.reason)]);
+              });
+            })();
+          <\/script>
+        `;
+
+        // 把注入脚本放在头部，确保在用户代码之前执行
+        // 但用户代码可能包含完整的 HTML 结构，所以我们把注入脚本插入到 <head> 或 <html> 前
+        let finalHtml = content;
+        // 如果内容包含 <head>，则插入到 <head> 之后；否则插入到最前面
+        if (content.includes('<head>')) {
+          finalHtml = content.replace('<head>', '<head>' + injectScript);
+        } else {
+          // 否则直接放在最前面
+          finalHtml = injectScript + content;
+        }
+
+        // 通过 srcdoc 加载
+        runIframe.srcdoc = finalHtml;
+
+        // 显示运行视图
+        runView.classList.add('active');
+        closeRunBtn.classList.add('active');
+        // 确保控制台展开
+        consolePanel.classList.remove('hidden');
+        toggleConsoleBtn.textContent = '▼ 隐藏';
+
+        // 清空可能存在的旧监听? 全局监听会持续存在，但只响应我们的消息
+      }
+
+      // 父窗口监听 iframe 发来的控制台消息
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || data.source !== 'website-edge-console') return;
+        const { type, args } = data;
+        const logMessage = args.join(' ');
+        appendConsoleLog(`[${type}] ${logMessage}`);
+      });
+
+      // 添加控制台日志
+      function appendConsoleLog(text) {
+        const div = document.createElement('div');
+        div.className = 'log-line';
+        div.textContent = text;
+        consoleOutput.appendChild(div);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight; // 自动滚动到底部
+        // 限制日志行数避免内存过多，保留最近100条
+        const lines = consoleOutput.querySelectorAll('.log-line');
+        if (lines.length > 150) {
+          lines[0].remove();
+        }
+      }
+
+      // 关闭运行视图
+      function closeRunView() {
+        runView.classList.remove('active');
+        closeRunBtn.classList.remove('active');
+        // 清空 iframe 内容，停止脚本运行
+        runIframe.srcdoc = '';
+        // 重置控制台（可选）
+        consoleOutput.innerHTML = '<div class="log-line">[WEBSITE-EDGE] 控制台就绪</div>';
+      }
+
+      // 切换控制台显示/隐藏
+      function toggleConsole() {
+        if (consolePanel.classList.contains('hidden')) {
+          consolePanel.classList.remove('hidden');
+          toggleConsoleBtn.textContent = '▼ 隐藏';
+        } else {
+          consolePanel.classList.add('hidden');
+          toggleConsoleBtn.textContent = '▲ 显示';
+        }
+      }
+
+      // ---------- 事件绑定 ----------
+      // 新建
+      newWorkBtn.addEventListener('click', openNewEditor);
+
+      // 保存
+      saveWorkBtn.addEventListener('click', saveCurrentWork);
+
+      // 关闭编辑器
+      closeEditorBtn.addEventListener('click', closeEditor);
+
+      // 点击覆盖层背景关闭 (小心不要点到面板)
+      editorOverlay.addEventListener('click', (e) => {
+        if (e.target === editorOverlay) {
+          closeEditor();
+        }
+      });
+
+      // 导入文件（覆盖编辑器内容）
+      importFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          codeEditor.value = ev.target.result;
+          // 若文件名可用，可自动填充作品名? 不处理
+        };
+        reader.readAsText(file);
+        importFileInput.value = ''; // 允许再次导入同一个文件
+      });
+
+      // 控制台切换
+      toggleConsoleBtn.addEventListener('click', toggleConsole);
+
+      // 关闭运行
+      closeRunBtn.addEventListener('click', closeRunView);
+
+      // 双击运行? 或者卡片上增加运行按钮? 修改卡片点击逻辑: 单击打开编辑器，另加运行按钮
+      // 但我们已经在卡片上只有删除按钮，重新设计卡片：添加一个运行小按钮?
+      // 为了便捷，修改卡片点击行为: 单击默认运行作品？但需求需要新建和删除，还有编辑。
+      // 更合理的交互: 点击卡片打开编辑器；另外在卡片添加运行图标? 但样式会复杂。
+      // 因此我们增加一个隐藏逻辑: 按住 Ctrl 点击卡片运行? 但手机不支持。
+      // 经过考虑，在作品卡片上增加一个“▶”运行按钮比较好。修改渲染逻辑。
+      // 重新调整 renderWorks 函数以添加运行按钮。
+      // 由于前面已经写了部分，我们重写 renderWorks 部分。
+      
+      // 为了节省时间，我们重写 renderWorks 函数覆盖上面的。
+      // 但代码已经执行了，我们重新定义。
+      // 把原先的 renderWorks 覆盖，加入运行按钮。
+      
+      const originalRenderWorks = renderWorks;
+      window.renderWorks = function() {
+        const names = getAllWorkNames();
+        worksGrid.innerHTML = '';
+
+        if (names.length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'empty-hint';
+          emptyDiv.textContent = '还没有作品，点击「新建」开始创作';
+          worksGrid.appendChild(emptyDiv);
+          return;
+        }
+
+        names.sort((a, b) => a.localeCompare(b));
+
+        names.forEach(name => {
+          const card = document.createElement('div');
+          card.className = 'work-card';
+          card.dataset.name = name;
+
+          const nameSpan = document.createElement('div');
+          nameSpan.className = 'work-name';
+          nameSpan.textContent = name;
+
+          // 按钮容器
+          const btnGroup = document.createElement('div');
+          btnGroup.style.display = 'flex';
+          btnGroup.style.gap = '6px';
+          btnGroup.style.marginTop = '4px';
+
+          // 运行按钮
+          const runBtn = document.createElement('button');
+          runBtn.innerHTML = '▶';
+          runBtn.title = '运行作品';
+          runBtn.style.background = '#1a3a1a';
+          runBtn.style.borderColor = '#2a5a2a';
+          runBtn.style.color = '#b0e0b0';
+          runBtn.style.padding = '6px 12px';
+          runBtn.style.fontSize = '1rem';
+          runBtn.style.borderRadius = '20px';
+          runBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            runWorkByName(name);
+          });
+
+          // 编辑按钮 (点击卡片本身也是编辑，但用按钮更明确)
+          const editBtn = document.createElement('button');
+          editBtn.innerHTML = '✎';
+          editBtn.title = '编辑作品';
+          editBtn.style.background = '#1f1f1f';
+          editBtn.style.padding = '6px 12px';
+          editBtn.style.fontSize = '1rem';
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditorForWork(name);
+          });
+
+          // 删除按钮 (悬浮在右上角保留，但这里也加一个)
+          const delBtn = document.createElement('button');
+          delBtn.innerHTML = '✕';
+          delBtn.title = '删除作品';
+          delBtn.className = 'delete-btn'; // 保留样式但位置不同? 为了统一，使用右上角删除，不再在组里添加
+          // 我们保留右上角的删除按钮，不在组里重复。
+          // 但组里可以不要删除
+
+          btnGroup.appendChild(runBtn);
+          btnGroup.appendChild(editBtn);
+
+          // 右上角删除按钮
+          const delCorner = document.createElement('button');
+          delCorner.className = 'delete-btn';
+          delCorner.innerHTML = '✕';
+          delCorner.title = '删除作品';
+          delCorner.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm(`确定要删除作品「${name}」吗？`)) {
+              deleteWork(name);
+              renderWorks(); // 重新渲染
+            }
+          });
+
+          card.appendChild(nameSpan);
+          card.appendChild(btnGroup);
+          card.appendChild(delCorner);
+
+          card.addEventListener('click', (e) => {
+            // 如果点击的是按钮，不处理 (按钮已阻止冒泡)
+            openEditorForWork(name);
+          });
+
+          worksGrid.appendChild(card);
+        });
+      };
+
+      // 重新赋值
+      renderWorks = window.renderWorks;
+
+      // 初始化渲染
+      renderWorks();
+
+      // 额外处理：若 localStorage 不可用则用内存模拟
+      // 但通常可用。增加降级警告
+      try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+      } catch (e) {
+        alert('浏览器不支持本地存储，作品将无法保存。请检查隐私设置。');
+      }
+
+      // 键盘支持：Esc 关闭编辑器或运行视图
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (editorOverlay.classList.contains('active')) {
+            closeEditor();
+          } else if (runView.classList.contains('active')) {
+            closeRunView();
+          }
+        }
+      });
+
+      // 运行视图中的 iframe 加载完成后可能还需要重新注入? 不用。
+      // 控制台隐藏按钮文本更新
+    })();
+  </script>
+</body>
+</html>
